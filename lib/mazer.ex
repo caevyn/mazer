@@ -15,8 +15,11 @@ defmodule Mazer do
     maze |> Enum.filter(fn c -> is_unvisited_neighbour(cell, c) end)
   end
 
-  def is_unvisited_neighbour(%{:x => cx, :y => cy }, %{:visited => false, :x => x, :y => y}) when (cy == y and ((x == cx-1) or (x == cx+1))) or (cx == x and ((y == cy + 1) or (y == cy-1))), do: true
-  def is_unvisited_neighbour(_, _), do: false
+  defp is_unvisited_neighbour(%{:x => x, :y => cy }, %{:visited => false, :x => x, :y => y}) when y == cy + 1, do: true
+  defp is_unvisited_neighbour(%{:x => x, :y => cy }, %{:visited => false, :x => x, :y => y}) when y == cy - 1, do: true
+  defp is_unvisited_neighbour(%{:x => cx, :y => y }, %{:visited => false, :x => x, :y => y}) when x == cx + 1, do: true
+  defp is_unvisited_neighbour(%{:x => cx, :y => y }, %{:visited => false, :x => x, :y => y}) when x == cx - 1, do: true
+  defp is_unvisited_neighbour(_, _), do: false
 
   def seed_random do
     << a :: 32, b :: 32, c :: 32 >> = :crypto.rand_bytes(12)
