@@ -21,19 +21,21 @@ defmodule Mazer do
     {horizontal, vertical} = walls |> Enum.split_while(&(&1.orientation == :horizontal)) 
     h_rows = horizontal |> Enum.chunk_by(&(&1.x))
     v_rows = vertical |> Enum.chunk_by(&(&1.x))
-    #rows = Enum.zip(h_rows, v_rows) |> Enum.reduce(fn(acc, x) -> Enum.concat(acc, Tuple.to_list(x)) end)
-    rows = for h <- h_rows, v<- v_rows, do: [h,v]
-    IO.puts(inspect(rows))
-    ascii_maze = rows |> Enum.reduce(fn(x, acc) -> acc <> print_row(x) <> "\n" end)
+    rows = h_rows|> Enum.zip(v_rows)
+    ascii_maze = rows |> Enum.reduce("", fn(x, acc) -> acc <> print_row(x) <> "\n" end)
     IO.puts(ascii_maze)
   end
 
   def print_row(row) do
-    row |> Enum.reduce(fn(x, acc) -> acc <> print_cell(x) end)
+    h = row |> elem(0)
+    v = row |> elem(1)
+    hs = h |> Enum.reduce("", fn(x, acc) -> acc <> print_cell(x) end)
+    vs = v |> Enum.reduce("", fn(x, acc) -> acc <> print_cell(x) end)
+    hs <> "\n" <> vs
   end
 
-  def print_cell(%{:orientation => :vertical, :open => true}),    do: "|   "
-  def print_cell(%{:orientation => :vertical, :open => false}),   do: "    "
+  def print_cell(%{:orientation => :vertical, :open => true}),    do: "    "
+  def print_cell(%{:orientation => :vertical, :open => false}),   do: "|   "
   def print_cell(%{:orientation => :horizontal, :open => true}),  do: "+   "
   def print_cell(%{:orientation => :horizontal, :open => false}), do: "+---"
   
