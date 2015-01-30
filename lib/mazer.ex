@@ -5,8 +5,8 @@ defmodule Mazer do
   end
 
   def init_walls(width, height) do
-    vert = for x <- 0..width, y <- 0..height, do: %{x: x, y: y, orientation: :vertical, open: false }  
-    horz = for x <- 0..width, y <- 0..height, do: %{x: x, y: y, orientation: :horizontal, open: false }  
+    vert = for y <- 0..height, x <- 0..width, do: %{x: x, y: y, orientation: :vertical, open: false }  
+    horz = for y <- 0..height, x <- 0..width, do: %{x: x, y: y, orientation: :horizontal, open: false }  
     horz ++ vert
   end
 
@@ -17,11 +17,12 @@ defmodule Mazer do
     visit(cell, cells, walls)
   end
   
-  def draw_ascii(walls) do    
+  def draw_ascii(walls) do
     {horizontal, vertical} = walls |> Enum.split_while(&(&1.orientation == :horizontal)) 
-    h_rows = horizontal |> Enum.chunk_by(&(&1.x))
-    v_rows = vertical |> Enum.chunk_by(&(&1.x))
-    rows = h_rows|> Enum.zip(v_rows)
+    h_rows = horizontal |> Enum.chunk_by(&(&1.y))
+    v_rows = vertical |> Enum.chunk_by(&(&1.y))
+    rows =  h_rows |> Enum.zip(v_rows)
+    #IO.puts(inspect(rows))
     ascii_maze = rows |> Enum.reduce("", fn(x, acc) -> acc <> print_row(x) <> "\n" end)
     IO.puts(ascii_maze)
   end
@@ -34,15 +35,19 @@ defmodule Mazer do
     hs <> "\n" <> vs
   end
 
-  def print_cell(%{:orientation => :vertical, :open => true}),    do: "    "
-  def print_cell(%{:orientation => :vertical, :open => false}),   do: "|   "
-  def print_cell(%{:orientation => :horizontal, :open => true}),  do: "+   "
-  def print_cell(%{:orientation => :horizontal, :open => false}), do: "+---"
+  def print_cell(%{:orientation => :vertical, :open => true, x: x, y: y}),    do: "    " #{x},#{y}"
+  def print_cell(%{:orientation => :vertical, :open => false, x: x, y: y}),   do: "|   " #"|#{x},#{y}"
+  def print_cell(%{:orientation => :horizontal, :open => true, x: x, y: y}),  do: "+   " #"+#{x},#{y}"
+  def print_cell(%{:orientation => :horizontal, :open => false, x: x, y: y}), do: "+---"  #".#{x},#{y}"
   
   def visit(cell, cells, walls) when cell != nil do
+    draw_ascii(walls)
+    IO.puts(inspect(cell))
+
     seed_random
     cells = cells |> replace_list_item(cell, %{cell | visited: true})
     next_cell = get_unvisited_neighbours(cells, cell) |> Enum.shuffle |> Enum.at(0)
+    IO.puts(inspect(next_cell))
     if next_cell != nil do
       walls = walls |> remove_wall_between(cell, next_cell)
     end
@@ -55,17 +60,15 @@ defmodule Mazer do
     %{cells: cells,walls: walls}
   end
 
-  def remove_wall_between(walls, c1 = %{x: x1, y: y1}, c2 = %{x: x2, y: y2}) when x1 == x2 do
-    wall = %{x: x1, y: min(y1, y2), orientation: :horizontal, open: false}
+  def remove_wall_between(walls, %{x: x1, y: y1}, %{x: x2, y: y2}) when x1 == x2 do
+    wall = %{x: x1, y: max(y1, y2), orientation: :horizontal, open: false}
+    IO.puts("#{inspect(wall)} h")
     walls |> open_wall(wall)
-    #walls |> replace_list_item(edge, %{edge | open => true}
-    	#%{x: x1, y: min(y1, y2), orientation: :horizontal, open: false},
-        #%{x: x1, y: min(y1, y2), orientation: :horizontal, open: true}
-    #)
   end
 
-  def remove_wall_between(walls, c1 = %{x: x1, y: y1}, c2 = %{x: x2, y: y2}) when y1 == y2 do
-    wall = %{x: min(x1, x2), y: y1, orientation: :vertical, open: false}
+  def remove_wall_between(walls, %{x: x1, y: y1}, %{x: x2, y: y2}) when y1 == y2 do
+    wall = %{x: max(x1, x2), y: y1, orientation: :vertical, open: false}
+    IO.puts("#{inspect(wall)} v")
     walls |> open_wall(wall)
   end
 
@@ -95,6 +98,6 @@ defmodule Mazer do
 
   def seed_random do
     << a :: 32, b :: 32, c :: 32 >> = :crypto.rand_bytes(12)
-    :random.seed(a,b,c)
+    :random.seed(1,2,3)
   end
 end 
