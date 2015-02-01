@@ -37,13 +37,25 @@ defmodule MazerTest do
   end
 
   test "Generated maze has all cells visited" do
-   #maze = Mazer.generate_maze(8,8)
-   # assert maze.cells |> Enum.all?(&(&1.visited))
-   # Mazer.draw_ascii(maze.walls)
+   maze = Mazer.generate_maze(8,8)
+   assert maze.cells |> Enum.all?(&(&1.visited))
   end
   
-  test "draw" do
+  test "draw 5x5" do
+    maze = Mazer.generate_maze(5,5)
+    IO.puts("\n")
+    Mazer.draw_ascii(maze.walls)
+  end
+
+  test "draw 9x9" do
     maze = Mazer.generate_maze(9,9)
+    IO.puts("\n")
+    Mazer.draw_ascii(maze.walls)
+  end
+
+  test "draw 14x14" do
+    maze = Mazer.generate_maze(14,14)
+    IO.puts("\n")
     Mazer.draw_ascii(maze.walls)
   end
 

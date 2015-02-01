@@ -1,6 +1,5 @@
 defmodule Mazer do
   def init_cells(width, height) do
-    #0..height-1 |> Enum.map(fn y -> Enum.map(0..width-1, fn x -> {x,y} end)  end) |> Enum.concat
     for x <- 0..width-1, y <- 0..height-1, do: %{x: x, y: y, visited: false}    
   end
 
@@ -13,8 +12,8 @@ defmodule Mazer do
   def generate_maze(width, height) do
     cells = init_cells(width, height)
     walls = init_walls(width, height)
-    cell = cells |> pick_random_cell
-    visit(cell, cells, walls)
+    start_cell = cells |> pick_random_cell
+    visit(start_cell, %{cells: cells, walls: walls})
   end
   
   def draw_ascii(walls) do
@@ -22,14 +21,12 @@ defmodule Mazer do
     h_rows = horizontal |> Enum.chunk_by(&(&1.y))
     v_rows = vertical |> Enum.chunk_by(&(&1.y))
     rows =  h_rows |> Enum.zip(v_rows)
-    #IO.puts(inspect(rows))
     ascii_maze = rows |> Enum.reduce("", fn(x, acc) -> acc <> print_row(x) <> "\n" end)
     IO.puts(ascii_maze)
   end
 
   def print_row(row) do
-    h = row |> elem(0)
-    v = row |> elem(1)
+    {h,v} = row
     hs = h |> Enum.reduce("", fn(x, acc) -> acc <> print_cell(x) end)
     vs = v |> Enum.reduce("", fn(x, acc) -> acc <> print_cell(x) end)
     hs <> "\n" <> vs
@@ -40,45 +37,39 @@ defmodule Mazer do
   def print_cell(%{:orientation => :horizontal, :open => true, x: x, y: y}),  do: "+   " #"+#{x},#{y}"
   def print_cell(%{:orientation => :horizontal, :open => false, x: x, y: y}), do: "+---"  #".#{x},#{y}"
   
-  def visit(cell, cells, walls) when cell != nil do
-    draw_ascii(walls)
-    IO.puts(inspect(cell))
+  def all_visited(cells), do: cells |> Enum.all?(&(&1.visited))
 
+  def visit(cell, maze = %{cells: cells, walls: walls}) when cell != nil do
     seed_random
-    cells = cells |> replace_list_item(cell, %{cell | visited: true})
-    next_cell = get_unvisited_neighbours(cells, cell) |> Enum.shuffle |> Enum.at(0)
-    IO.puts(inspect(next_cell))
-    if next_cell != nil do
+    index = cells |> Enum.find_index(&(&1.x == cell.x and &1.y == cell.y))
+    cell = cells |> Enum.at(index)
+    cells = cells |> Enum.to_list |> List.replace_at(index, %{cell | :visited => true})
+    n = get_unvisited_neighbours(cells, cell) |> Enum.shuffle
+    m = n |> Enum.reduce(%{cells: cells, walls: walls}, fn(x,acc) -> acc = do_neighbour(cell, x, acc.cells, acc.walls) end)
+  end
+
+  def do_neighbour(cell, next_cell = %{visited: false}, cells, walls) do
+    cell = cells |> Enum.find(&(&1.x == cell.x and &1.y == cell.y))
+    next_cell = cells |> Enum.find(&(&1.x == next_cell.x and &1.y == next_cell.y))
+    if not next_cell.visited do
       walls = walls |> remove_wall_between(cell, next_cell)
     end
-    visit(next_cell, cells, walls)
+    visit(next_cell, %{cells: cells, walls: walls})
   end
-
-  def visit(cell, cells, walls) do
-    #backtrack?
-    IO.puts('all visited?')
-    %{cells: cells,walls: walls}
-  end
-
+ 
   def remove_wall_between(walls, %{x: x1, y: y1}, %{x: x2, y: y2}) when x1 == x2 do
     wall = %{x: x1, y: max(y1, y2), orientation: :horizontal, open: false}
-    IO.puts("#{inspect(wall)} h")
     walls |> open_wall(wall)
   end
 
   def remove_wall_between(walls, %{x: x1, y: y1}, %{x: x2, y: y2}) when y1 == y2 do
     wall = %{x: max(x1, x2), y: y1, orientation: :vertical, open: false}
-    IO.puts("#{inspect(wall)} v")
     walls |> open_wall(wall)
   end
 
   def open_wall(walls, wall) do
-    walls |> replace_list_item(wall, %{wall | :open => true})
-  end
-
-  def replace_list_item(items, old_item, new_item) do
-    index = items |> Enum.find_index(&(Map.equal?(old_item, &1)))
-    items |> Enum.to_list |> List.replace_at(index, new_item)
+    index = walls |> Enum.find_index(&(Map.equal?(wall, &1)))
+    walls |> Enum.to_list |> List.replace_at(index, %{wall | :open => true})
   end
 
   def pick_random_cell(cells) do
@@ -98,6 +89,7 @@ defmodule Mazer do
 
   def seed_random do
     << a :: 32, b :: 32, c :: 32 >> = :crypto.rand_bytes(12)
-    :random.seed(1,2,3)
+    :random.seed(a,b,c)
+    #:random.seed(5,2,4)
   end
 end 
