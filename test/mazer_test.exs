@@ -8,16 +8,6 @@ defmodule MazerTest do
     assert maze |> Enum.count(&(&1[:y] == 1)) == 4
   end
 
-
-  test "Get a random cell returns a cell" do
-    maze = Mazer.init_cells(4,5)
-    1..5 |> Enum.each(fn _ -> 
-      cell = Mazer.pick_random_cell(maze)
-      assert cell[:x] < 4
-      assert cell[:y] < 5
-    end)
-  end
-
   test "get_unvisited_neighbours returns 2 neighbours in new maze in top corner" do
     maze = Mazer.init_cells(4,5)
     neighbours = Mazer.get_unvisited_neighbours(maze, Enum.at(maze, 0))
@@ -44,19 +34,25 @@ defmodule MazerTest do
   test "draw 5x5" do
     maze = Mazer.generate_maze(5,5)
     IO.puts("\n")
-    Mazer.draw_ascii(maze.walls)
+    AsciiPrinter.draw_ascii(maze)
   end
 
   test "draw 9x9" do
     maze = Mazer.generate_maze(9,9)
     IO.puts("\n")
-    Mazer.draw_ascii(maze.walls)
+    AsciiPrinter.draw_ascii(maze)
   end
 
   test "draw 14x14" do
     maze = Mazer.generate_maze(14,14)
     IO.puts("\n")
-    Mazer.draw_ascii(maze.walls)
+    AsciiPrinter.draw_ascii(maze)
+  end
+
+  test "draw 20x60" do
+    maze = Mazer.generate_maze(20,60)
+    IO.puts("\n")
+    AsciiPrinter.draw_ascii(maze)
   end
 
 
